@@ -1,48 +1,48 @@
-import React, { useState, useEffect } from 'react';
-import logo from './logo.svg';
+import React, { useEffect, useMemo, useReducer } from 'react';
+import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import './App.css';
+import { RecipesContext, recipesReducer, initialState } from './store/recipesStore';
+import HomePage from './pages/HomePage';
+import SearchPage from './pages/SearchPage';
+import RecipeDetailPage from './pages/RecipeDetailPage';
+import Header from './components/Header';
+import Sidebar from './components/Sidebar';
 
 // PUBLIC_INTERFACE
 function App() {
-  const [theme, setTheme] = useState('light');
+  const [state, dispatch] = useReducer(recipesReducer, initialState);
 
-  // Effect to apply theme to document element
+  // theme sync to document root
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-  }, [theme]);
+    document.documentElement.setAttribute('data-theme', state.theme);
+  }, [state.theme]);
 
-  // PUBLIC_INTERFACE
-  const toggleTheme = () => {
-    setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
-  };
+  const store = useMemo(() => ({ state, dispatch }), [state, dispatch]);
 
   return (
-    <div className="App">
-      <header className="App-header">
-        <button 
-          className="theme-toggle" 
-          onClick={toggleTheme}
-          aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
-        >
-          {theme === 'light' ? '🌙 Dark' : '☀️ Light'}
-        </button>
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <p>
-          Current theme: <strong>{theme}</strong>
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <RecipesContext.Provider value={store}>
+      <BrowserRouter>
+        <div className="app-root">
+          <Header />
+          <div className="app-body">
+            <Sidebar />
+            <main className="content" role="main" aria-label="Main content">
+              <Routes>
+                <Route path="/" element={<HomePage />} />
+                <Route path="/search" element={<SearchPage />} />
+                <Route path="/recipes/:id" element={<RecipeDetailPage />} />
+                <Route path="*" element={
+                  <div className="empty-state">
+                    <h3>Page not found</h3>
+                    <p>Return to <Link to="/">home</Link>.</p>
+                  </div>
+                } />
+              </Routes>
+            </main>
+          </div>
+        </div>
+      </BrowserRouter>
+    </RecipesContext.Provider>
   );
 }
 
